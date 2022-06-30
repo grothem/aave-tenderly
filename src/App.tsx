@@ -15,8 +15,6 @@ const tenderly = axios.create({
 });
 
 const chainId = 3030;
-const forkChainId = 1;
-
 let didInit = false;
 
 interface Fork {
@@ -25,14 +23,24 @@ interface Fork {
   forkChainId: number;
 }
 
+interface Network {
+  chainId: number;
+  name: string;
+}
+
+const networks: Network[] = [
+  { chainId: 1, name: "Mainnet" },
+  { chainId: 137, name: "Polygon" },
+];
+
 const rpcUrl = (forkId: string) => {
   return `https://rpc.tenderly.co/fork/${forkId}`;
 };
 
-const getSnippet = (forkId: string) => {
+const getSnippet = (forkId: string, forkBaseChainId: number) => {
   return `
     localStorage.setItem('forkEnabled', 'true');
-    localStorage.setItem('forkBaseChainId', 1);
+    localStorage.setItem('forkBaseChainId', '${forkBaseChainId}');
     localStorage.setItem('forkNetworkId', '3030');
     localStorage.setItem('forkRPCUrl', '${rpcUrl(forkId)}');
   `;
@@ -42,6 +50,7 @@ function App() {
   const [fundAddress, setFundAddress] = React.useState("");
   const [forks, setForks] = React.useState<Fork[]>([]);
   const [snippet, setSnippet] = React.useState<string>("");
+  const [network, setNetwork] = React.useState<number>(networks[0].chainId);
 
   useEffect(() => {
     if (didInit) return;
@@ -56,14 +65,14 @@ function App() {
     const response = await tenderly.post(
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
       {
-        network_id: forkChainId,
+        network_id: network,
         chain_config: { chain_id: chainId },
       }
     );
 
     console.log(response);
     const { id } = response.data.simulation_fork;
-    const f = [...forks, { forkId: id, chainId, forkChainId }];
+    const f = [...forks, { forkId: id, chainId, forkChainId: network }];
     setForks(f);
     localStorage.setItem("forks", JSON.stringify(f));
   }
@@ -92,7 +101,16 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <button onClick={createFork}>Create Fork</button>
+        <div style={{ display: "flex", gap: "5px", margin: "5px" }}>
+          <button onClick={createFork}>Create Fork</button>
+          <select onChange={(e) => setNetwork(Number(e.target.value))}>
+            {networks.map((n) => (
+              <option key={n.chainId} value={n.chainId}>
+                {n.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <input
           placeholder="Fund Address"
           value={fundAddress}
@@ -109,13 +127,20 @@ function App() {
               key={fork.forkId}
             >
               <div>{fork.forkId}</div>
+              <div>
+                {networks.find((n) => n.chainId === fork.forkChainId)?.name}
+              </div>
               <button onClick={() => deleteFork(fork.forkId)}>
                 Delete Fork
               </button>
               <button onClick={() => fundAccount(fork.forkId)}>
                 Fund Account
               </button>
-              <button onClick={() => setSnippet(getSnippet(fork.forkId))}>
+              <button
+                onClick={() =>
+                  setSnippet(getSnippet(fork.forkId, fork.forkChainId))
+                }
+              >
                 &lt;/&gt;
               </button>
             </div>
