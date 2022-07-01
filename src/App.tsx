@@ -31,6 +31,7 @@ interface Network {
 const networks: Network[] = [
   { chainId: 1, name: "Mainnet" },
   { chainId: 137, name: "Polygon" },
+  { chainId: 43114, name: "Avalanche"}
 ];
 
 const rpcUrl = (forkId: string) => {
