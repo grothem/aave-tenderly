@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 import { ethers } from "ethers";
+import { getMainnetSdk } from '@dethcrypto/eth-sdk-client'
 
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
@@ -62,6 +63,9 @@ function App() {
     setForks(JSON.parse(f));
   }, []);
 
+  async function foo() {
+
+  }
   async function createFork() {
     const response = await tenderly.post(
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
