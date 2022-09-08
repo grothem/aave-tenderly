@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 import { ethers } from "ethers";
-import { getMainnetSdk } from '@dethcrypto/eth-sdk-client'
+import { Fundooor } from "./Fundooor";
 
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
@@ -32,7 +32,7 @@ interface Network {
 const networks: Network[] = [
   { chainId: 1, name: "Mainnet" },
   { chainId: 137, name: "Polygon" },
-  { chainId: 43114, name: "Avalanche"}
+  { chainId: 43114, name: "Avalanche" },
 ];
 
 const rpcUrl = (forkId: string) => {
@@ -63,9 +63,7 @@ function App() {
     setForks(JSON.parse(f));
   }, []);
 
-  async function foo() {
-
-  }
+  async function foo() {}
   async function createFork() {
     const response = await tenderly.post(
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
@@ -141,6 +139,7 @@ function App() {
               <button onClick={() => fundAccount(fork.forkId)}>
                 Fund Account
               </button>
+              <Fundooor forkRPC={rpcUrl(fork.forkId)} />
               <button
                 onClick={() =>
                   setSnippet(getSnippet(fork.forkId, fork.forkChainId))
