@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 import { ethers } from "ethers";
-import { Fundooor } from "./Fundooor";
+import { SendDai } from "./SendDai";
 
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
@@ -136,10 +136,8 @@ function App() {
               <button onClick={() => deleteFork(fork.forkId)}>
                 Delete Fork
               </button>
-              <button onClick={() => fundAccount(fork.forkId)}>
-                Fund Account
-              </button>
-              <Fundooor forkRPC={rpcUrl(fork.forkId)} />
+              <button onClick={() => fundAccount(fork.forkId)}>Send ETH</button>
+              <SendDai forkRPC={rpcUrl(fork.forkId)} />
               <button
                 onClick={() =>
                   setSnippet(getSnippet(fork.forkId, fork.forkChainId))
