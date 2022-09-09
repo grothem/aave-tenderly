@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { Dai__factory } from "./Dai__factory";
+export { Steth__factory } from "./Steth__factory";

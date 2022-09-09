@@ -2,5 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { Dai } from "./Dai";
+export type { Steth } from "./Steth";
 export * as factories from "./factories";
 export { Dai__factory } from "./factories/Dai__factory";
+export { Steth__factory } from "./factories/Steth__factory";
