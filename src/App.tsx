@@ -64,7 +64,6 @@ function App() {
     setForks(JSON.parse(f));
   }, []);
 
-  async function foo() {}
   async function createFork() {
     const response = await tenderly.post(
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
