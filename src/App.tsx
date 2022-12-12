@@ -16,7 +16,7 @@ const tenderly = axios.create({
   },
 });
 
-const chainId = 3030;
+// const chainId = 3030;
 let didInit = false;
 
 interface Fork {
@@ -44,7 +44,7 @@ const getSnippet = (forkId: string, forkBaseChainId: number) => {
   return `
     localStorage.setItem('forkEnabled', 'true');
     localStorage.setItem('forkBaseChainId', '${forkBaseChainId}');
-    localStorage.setItem('forkNetworkId', '3030');
+    localStorage.setItem('forkNetworkId', '${forkBaseChainId}');
     localStorage.setItem('forkRPCUrl', '${rpcUrl(forkId)}');
   `;
 };
@@ -69,13 +69,16 @@ function App() {
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
       {
         network_id: network,
-        chain_config: { chain_id: chainId },
+        chain_config: { chain_id: network },
       }
     );
 
     console.log(response);
     const { id } = response.data.simulation_fork;
-    const f = [...forks, { forkId: id, chainId, forkChainId: network }];
+    const f = [
+      ...forks,
+      { forkId: id, chainId: network, forkChainId: network },
+    ];
     setForks(f);
     localStorage.setItem("forks", JSON.stringify(f));
   }
