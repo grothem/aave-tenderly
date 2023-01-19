@@ -98,7 +98,7 @@ function App() {
     const provider = new ethers.providers.JsonRpcProvider(rpcUrl(forkId));
     // fund it with 1,000 ether
     const params = [fundAddress, "0x21e19e0c9bab2400000"];
-    await provider.send("tenderly_setBalance", params);
+    await provider.send("tenderly_addBalance", params);
   }
 
   return (
