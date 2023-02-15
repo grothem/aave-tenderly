@@ -4,6 +4,7 @@ import axios from "axios";
 import { ethers } from "ethers";
 import { SendDai } from "./SendDai";
 import { SendStETH } from "./SendStETH";
+import { FreezeReserve } from "./FreezeReserve";
 
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
@@ -162,6 +163,9 @@ function App() {
               >
                 Send ETH
               </button>
+              {fork.chainId === 137 && (
+                <FreezeReserve forkRPC={rpcUrl(fork.forkId)} />
+              )}
               <SendDai forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
               <SendStETH forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
               <button
