@@ -16,7 +16,7 @@ const tenderly = axios.create({
   },
 });
 
-const chainId = 3030;
+const defaultChainId = 3030;
 let didInit = false;
 
 interface Fork {
@@ -40,11 +40,15 @@ const rpcUrl = (forkId: string) => {
   return `https://rpc.tenderly.co/fork/${forkId}`;
 };
 
-const getSnippet = (forkId: string, forkBaseChainId: number) => {
+const getSnippet = (
+  forkId: string,
+  forkBaseChainId: number,
+  networkId: number
+) => {
   return `
     localStorage.setItem('forkEnabled', 'true');
-    localStorage.setItem('forkBaseChainId', '${forkBaseChainId}');
-    localStorage.setItem('forkNetworkId', '3030');
+    localStorage.setItem('forkBaseChainId', '${networkId}');
+    localStorage.setItem('forkNetworkId', '${forkBaseChainId}');
     localStorage.setItem('forkRPCUrl', '${rpcUrl(forkId)}');
   `;
 };
@@ -54,6 +58,7 @@ function App() {
   const [forks, setForks] = React.useState<Fork[]>([]);
   const [snippet, setSnippet] = React.useState<string>("");
   const [network, setNetwork] = React.useState<number>(networks[0].chainId);
+  const [useForkChainId, setUseForkChainId] = React.useState(false);
 
   useEffect(() => {
     if (didInit) return;
@@ -65,6 +70,8 @@ function App() {
   }, []);
 
   async function createFork() {
+    const chainId = useForkChainId ? network : defaultChainId;
+
     const response = await tenderly.post(
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
       {
@@ -75,7 +82,10 @@ function App() {
 
     console.log(response);
     const { id } = response.data.simulation_fork;
-    const f = [...forks, { forkId: id, chainId, forkChainId: network }];
+    const f = [
+      ...forks,
+      { forkId: id, chainId: network, forkChainId: chainId },
+    ];
     setForks(f);
     localStorage.setItem("forks", JSON.stringify(f));
   }
@@ -113,6 +123,16 @@ function App() {
               </option>
             ))}
           </select>
+          <label
+            style={{ fontSize: 12, display: "flex", alignItems: "center" }}
+          >
+            use forked chain id as base chain id:
+            <input
+              type="checkbox"
+              id="baseChainId"
+              onChange={(e) => setUseForkChainId(e.target.checked)}
+            />
+          </label>
         </div>
         <input
           placeholder="Fund Address"
@@ -146,7 +166,9 @@ function App() {
               <SendStETH forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
               <button
                 onClick={() =>
-                  setSnippet(getSnippet(fork.forkId, fork.forkChainId))
+                  setSnippet(
+                    getSnippet(fork.forkId, fork.forkChainId, fork.chainId)
+                  )
                 }
               >
                 &lt;/&gt;
