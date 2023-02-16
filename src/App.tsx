@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 import { SendDai } from "./SendDai";
 import { SendStETH } from "./SendStETH";
 import { FreezeReserve } from "./FreezeReserve";
+import { Fork, NetworkName, networks } from "./common";
 
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
@@ -19,23 +20,6 @@ const tenderly = axios.create({
 
 const defaultChainId = 3030;
 let didInit = false;
-
-interface Fork {
-  forkId: string;
-  chainId: number;
-  forkChainId: number;
-}
-
-interface Network {
-  chainId: number;
-  name: string;
-}
-
-const networks: Network[] = [
-  { chainId: 1, name: "Mainnet" },
-  { chainId: 137, name: "Polygon" },
-  { chainId: 43114, name: "Avalanche" },
-];
 
 const rpcUrl = (forkId: string) => {
   return `https://rpc.tenderly.co/fork/${forkId}`;
@@ -83,9 +67,11 @@ function App() {
 
     console.log(response);
     const { id } = response.data.simulation_fork;
+    const networkName = networks.find((n) => n.chainId === network)
+      ?.name as NetworkName;
     const f = [
       ...forks,
-      { forkId: id, chainId: network, forkChainId: chainId },
+      { networkName, forkId: id, chainId: network, forkChainId: chainId },
     ];
     setForks(f);
     localStorage.setItem("forks", JSON.stringify(f));
@@ -163,9 +149,10 @@ function App() {
               >
                 Send ETH
               </button>
-              {fork.chainId === 137 && (
-                <FreezeReserve forkRPC={rpcUrl(fork.forkId)} />
-              )}
+              <FreezeReserve
+                forkRPC={rpcUrl(fork.forkId)}
+                networkName={fork.networkName}
+              />
               <SendDai forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
               <SendStETH forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
               <button

@@ -1,48 +1,46 @@
-import { AaveV3Polygon } from "@bgd-labs/aave-address-book";
-import { ethers } from "ethers";
+import { NetworkName } from "./common";
+import { useFreezeReserve } from "./hooks/useFreezeReserve";
 
 export interface FreezeReserveProps {
   forkRPC: string;
+  networkName: NetworkName;
 }
 
-export const FreezeReserve = ({ forkRPC }: FreezeReserveProps) => {
-  const freeze = async (freeze: boolean) => {
-    const provider = new ethers.providers.JsonRpcProvider(forkRPC);
-    const signer = provider.getSigner();
-    const poolConfigurator = new ethers.Contract(
-      AaveV3Polygon.POOL_CONFIGURATOR,
-      ["function setReserveFreeze(address asset, bool freeze)"],
-      signer
-    );
+const AssetsToFreeze = {
+  Polygon: {
+    address: "0x4e3Decbb3645551B8A19f0eA1678079FCB33fB4c",
+    symbol: "jEUR",
+  },
+  Mainnet: {
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    symbol: "USDC",
+  },
+  Avalanche: { address: "", symbol: "" }, // TODO
+};
 
-    const unsignedTx =
-      await poolConfigurator.populateTransaction.setReserveFreeze(
-        "0x4e3Decbb3645551B8A19f0eA1678079FCB33fB4c", // jEUR
-        freeze
-      );
+export const FreezeReserve = ({ forkRPC, networkName }: FreezeReserveProps) => {
+  const { freeze, unfreeze } = useFreezeReserve(forkRPC, networkName);
 
-    const transactionParameters = [
-      {
-        to: AaveV3Polygon.POOL_CONFIGURATOR,
-        from: AaveV3Polygon.ACL_ADMIN,
-        data: unsignedTx.data,
-        gas: ethers.utils.hexValue(8000000),
-        gasPrice: ethers.utils.hexValue(0),
-        value: ethers.utils.hexValue(0),
-      },
-    ];
+  if (networkName === "Avalanche") return null; // TODO
 
-    const txHash = await provider.send(
-      "eth_sendTransaction",
-      transactionParameters
-    );
-
-    console.log(txHash);
-  };
   return (
     <>
-      <button onClick={() => freeze(true)}>Freeze jEUR</button>
-      <button onClick={() => freeze(false)}>Unfreeze jEUR</button>
+      <button
+        onClick={async () => {
+          const txHash = await freeze(AssetsToFreeze[networkName].address);
+          console.log(txHash);
+        }}
+      >
+        Freeze {AssetsToFreeze[networkName].symbol}
+      </button>
+      <button
+        onClick={async () => {
+          const txHash = await unfreeze(AssetsToFreeze[networkName].address);
+          console.log(txHash);
+        }}
+      >
+        Unfreeze {AssetsToFreeze[networkName].symbol}
+      </button>
     </>
   );
 };
