@@ -136,6 +136,7 @@ function App() {
               }}
               key={fork.forkId}
             >
+              <img src={`icons/${fork.networkName}.svg`} alt="" />
               <div>{fork.forkId}</div>
               <div>
                 {networks.find((n) => n.chainId === fork.forkChainId)?.name}
