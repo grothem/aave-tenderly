@@ -121,6 +121,17 @@ function App() {
             />
           </label>
         </div>
+        <span
+          style={{
+            visibility: useForkChainId ? "visible" : "hidden",
+            fontSize: "14px",
+            color: "red",
+            marginBottom: "4px",
+          }}
+        >
+          Be careful of replay attacks!
+        </span>
+
         <input
           placeholder="Fund Address"
           value={fundAddress}
