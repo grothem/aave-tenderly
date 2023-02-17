@@ -16,12 +16,15 @@ const AssetsToFreeze = {
     symbol: "USDC",
   },
   Avalanche: { address: "", symbol: "" }, // TODO
+  Arbitrum: { address: "", symbol: "" }, // TODO
+  Optimism: { address: "", symbol: "" }, // TODO
 };
 
 export const FreezeReserve = ({ forkRPC, networkName }: FreezeReserveProps) => {
   const { freeze, unfreeze } = useFreezeReserve(forkRPC, networkName);
 
-  if (networkName === "Avalanche") return null; // TODO
+  if (["Avalanche", "Arbitrum", "Optimism"].indexOf(networkName) >= 0)
+    return null; // TODO
 
   return (
     <>

@@ -60,7 +60,7 @@ function App() {
     const response = await tenderly.post(
       `account/${TENDERLY_ACCOUNT}/project/${TENDERLY_PROJECT}/fork`,
       {
-        network_id: network,
+        network_id: network.toString(),
         chain_config: { chain_id: chainId },
       }
     );
