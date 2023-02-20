@@ -12,7 +12,7 @@ import AddNetwork from "./AddNetwork";
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
 const TENDERLY_PROJECT = process.env.REACT_APP_TENDERLY_PROJECT;
-const FORK_CHAIN_ID = Number(process.env.REACT_APP_FORK_CHAIN_ID);
+const FORK_CHAIN_ID = 3030;
 
 const injected = injectedModule()
 const web3OnboardWallets = [
@@ -74,7 +74,7 @@ const tenderly = axios.create({
   },
 });
 
-const chainId = FORK_CHAIN_ID;
+const defaultChainId = FORK_CHAIN_ID;
 let didInit = false;
 
 interface Fork {
@@ -104,11 +104,15 @@ const rpcUrl = (forkId: string) => {
   return `https://rpc.tenderly.co/fork/${forkId}`;
 };
 
-const getSnippet = (forkId: string, forkBaseChainId: number) => {
+const getSnippet = (
+  forkId: string,
+  forkBaseChainId: number,
+  networkId: number
+) => {
   return `
     localStorage.setItem('forkEnabled', 'true');
-    localStorage.setItem('forkBaseChainId', '${forkBaseChainId}');
-    localStorage.setItem('forkNetworkId', '3030');
+    localStorage.setItem('forkBaseChainId', '${networkId}');
+    localStorage.setItem('forkNetworkId', '${forkBaseChainId}');
     localStorage.setItem('forkRPCUrl', '${rpcUrl(forkId)}');
   `;
 };
@@ -118,6 +122,7 @@ function App() {
   const [forks, setForks] = React.useState<Fork[]>([]);
   const [snippet, setSnippet] = React.useState<string>("");
   const [network, setNetwork] = React.useState<number>(networks[0].chainId);
+  const [useForkChainId, setUseForkChainId] = React.useState(false);
 
   useEffect(() => {
     if (didInit) return;
@@ -127,6 +132,8 @@ function App() {
 
     setForks(JSON.parse(f));
   }, []);
+
+  const chainId = useForkChainId ? network : defaultChainId;
 
   async function createFork() {
     const response = await tenderly.post(
@@ -139,7 +146,10 @@ function App() {
 
     console.log(response);
     const { id } = response.data.simulation_fork;
-    const f = [...forks, { forkId: id, chainId, forkChainId: network }];
+    const f = [
+      ...forks,
+      { forkId: id, chainId: network, forkChainId: chainId },
+    ];
     setForks(f);
     localStorage.setItem("forks", JSON.stringify(f));
   }
@@ -179,6 +189,26 @@ function App() {
               ))}
             </select>
           </div>
+          <label
+            style={{ fontSize: 12, display: "flex", alignItems: "center" }}
+          >
+            use forked chain id as base chain id:
+            <input
+              type="checkbox"
+              id="baseChainId"
+              onChange={(e) => setUseForkChainId(e.target.checked)}
+            />
+          </label>
+          <span
+            style={{
+              visibility: useForkChainId ? "visible" : "hidden",
+              fontSize: "14px",
+              color: "red",
+              marginBottom: "4px",
+            }}
+          >
+            Be careful of replay attacks!
+          </span>
           <input
             placeholder="Fund Address"
             value={fundAddress}
@@ -201,7 +231,7 @@ function App() {
                 <button onClick={() => deleteFork(fork.forkId)}>
                   Delete Fork
                 </button>
-                <AddNetwork forkRpcUrl={rpcUrl(fork.forkId)} forkChainId={FORK_CHAIN_ID} network={networks.find((n) => n.chainId === fork.forkChainId)} />
+                <AddNetwork forkRpcUrl={rpcUrl(fork.forkId)} forkChainId={fork.chainId} network={networks.find((n) => n.chainId === fork.forkChainId)} />
                 <button
                   disabled={!fundAddress}
                   onClick={() => fundAccount(fork.forkId)}
@@ -212,7 +242,9 @@ function App() {
                 <SendStETH forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
                 <button
                   onClick={() =>
-                    setSnippet(getSnippet(fork.forkId, fork.forkChainId))
+                    setSnippet(
+                      getSnippet(fork.forkId, fork.forkChainId, fork.chainId)
+                    )
                   }
                 >
                   &lt;/&gt;

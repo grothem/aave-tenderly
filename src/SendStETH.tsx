@@ -21,7 +21,7 @@ export const SendStETH = ({ forkRPC, address }: SendStETHProps) => {
       const signer = provider.getSigner();
       const stETH = Steth__factory.connect(STETH_ADDRESS, signer);
 
-      const amount = utils.parseEther("1");
+      const amount = utils.parseEther("60");
       const unsignedTx = await stETH.populateTransaction.transfer(
         address,
         amount.toString()
