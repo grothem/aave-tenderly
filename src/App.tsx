@@ -4,10 +4,68 @@ import axios from "axios";
 import { ethers } from "ethers";
 import { SendDai } from "./SendDai";
 import { SendStETH } from "./SendStETH";
+import { Web3OnboardProvider, init } from '@web3-onboard/react'
+import injectedModule from '@web3-onboard/injected-wallets'
+import ConnectWallet from "./ConnectWallet";
+import AddNetwork from "./AddNetwork";
 
 const TENDERLY_KEY = process.env.REACT_APP_TENDERLY_KEY;
 const TENDERLY_ACCOUNT = process.env.REACT_APP_TENDERLY_ACCOUNT;
 const TENDERLY_PROJECT = process.env.REACT_APP_TENDERLY_PROJECT;
+const FORK_CHAIN_ID = Number(process.env.REACT_APP_FORK_CHAIN_ID);
+
+const injected = injectedModule()
+const web3OnboardWallets = [
+  injected
+]
+const web3OnboardChains = [
+  {
+    id: '0x1',
+    token: 'ETH',
+    label: 'Ethereum Mainnet',
+    rpcUrl: `https://rpc.ankr.com/etho`,
+  },
+  {
+    id: '0x5',
+    token: 'ETH',
+    label: 'Goerli',
+    rpcUrl: `https://mainnet.infura.io/v3/demo`,
+  },
+  {
+    id: '0x13881',
+    token: 'MATIC',
+    label: 'Polygon',
+    rpcUrl: `https://polygon-rpc.com`,
+  },
+  {
+    id: '0xA',
+    token: 'OETH',
+    label: 'Optimism',
+    rpcUrl: 'https://optimism-mainnet.public.blastapi.io',
+  },
+  {
+    id: '0xA4B1',
+    token: 'ARB-ETH',
+    label: 'Arbitrum',
+    rpcUrl: `https://rpc.ankr.com/arbitrum`,
+  }
+]
+
+const appMetadata = {
+  name: 'Aave Tenderly',
+  icon: '<svg>ghost</svg>',
+  description: 'Ibjected wallet connection',
+  recommendedInjectedWallets: [
+    { name: 'MetaMask', url: 'https://metamask.io' },
+    { name: 'Coinbase', url: 'https://wallet.coinbase.com/' }
+  ]
+};
+
+const web3Onboard = init({
+  wallets: web3OnboardWallets,
+  chains: web3OnboardChains,
+  appMetadata
+})
 
 const tenderly = axios.create({
   baseURL: "https://api.tenderly.co/api/v1/",
@@ -16,7 +74,7 @@ const tenderly = axios.create({
   },
 });
 
-const chainId = 3030;
+const chainId = FORK_CHAIN_ID;
 let didInit = false;
 
 interface Fork {
@@ -25,15 +83,21 @@ interface Fork {
   forkChainId: number;
 }
 
-interface Network {
+export interface Network {
   chainId: number;
   name: string;
+  baseAsset: string;
 }
 
 const networks: Network[] = [
-  { chainId: 1, name: "Mainnet" },
-  { chainId: 137, name: "Polygon" },
-  { chainId: 43114, name: "Avalanche" },
+  { chainId: 1, name: "Mainnet", baseAsset: 'ETH' },
+  { chainId: 137, name: "Polygon", baseAsset: "MATIC" },
+  { chainId: 43114, name: "Avalanche", baseAsset: "AVAX" },
+  { chainId: 42161, name: "Arbitrum", baseAsset: "ETH" },
+  { chainId: 10, name: "Optimism", baseAsset: "ETH" },
+  { chainId: 250, name: "Fantom", baseAsset: "FTM" },
+  { chainId: 1666600000, name: "Harmony", baseAsset: "ONE" },
+  { chainId: 5, name: "Goerli", baseAsset: "ETH", }
 ];
 
 const rpcUrl = (forkId: string) => {
@@ -102,64 +166,68 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <div style={{ display: "flex", gap: "5px", margin: "5px" }}>
-          <button onClick={createFork}>Create Fork</button>
-          <select onChange={(e) => setNetwork(Number(e.target.value))}>
-            {networks.map((n) => (
-              <option key={n.chainId} value={n.chainId}>
-                {n.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <input
-          placeholder="Fund Address"
-          value={fundAddress}
-          onChange={(e) => setFundAddress(e.target.value)}
-        />
-        <div>
-          {forks.map((fork) => (
-            <div
-              style={{
-                border: "1px solid gray",
-                padding: "10px",
-                margin: "10px",
-              }}
-              key={fork.forkId}
-            >
-              <div>{fork.forkId}</div>
-              <div>
-                {networks.find((n) => n.chainId === fork.forkChainId)?.name}
+    <Web3OnboardProvider web3Onboard={web3Onboard}>
+      <div className="App">
+        <header className="App-header">
+          <div style={{ display: "flex", gap: "5px", margin: "5px" }}>
+            <button onClick={createFork}>Create Fork</button>
+            <select onChange={(e) => setNetwork(Number(e.target.value))}>
+              {networks.map((n) => (
+                <option key={n.chainId} value={n.chainId}>
+                  {n.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <input
+            placeholder="Fund Address"
+            value={fundAddress}
+            onChange={(e) => setFundAddress(e.target.value)}
+          />
+          <div>
+            {forks.map((fork) => (
+              <div
+                style={{
+                  border: "1px solid gray",
+                  padding: "10px",
+                  margin: "10px",
+                }}
+                key={fork.forkId}
+              >
+                <div>{fork.forkId}</div>
+                <div>
+                  {networks.find((n) => n.chainId === fork.forkChainId)?.name}
+                </div>
+                <button onClick={() => deleteFork(fork.forkId)}>
+                  Delete Fork
+                </button>
+                <AddNetwork forkRpcUrl={rpcUrl(fork.forkId)} forkChainId={FORK_CHAIN_ID} network={networks.find((n) => n.chainId === fork.forkChainId)} />
+                <button
+                  disabled={!fundAddress}
+                  onClick={() => fundAccount(fork.forkId)}
+                >
+                  Send ETH
+                </button>
+                <SendDai forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
+                <SendStETH forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
+                <button
+                  onClick={() =>
+                    setSnippet(getSnippet(fork.forkId, fork.forkChainId))
+                  }
+                >
+                  &lt;/&gt;
+                </button>
               </div>
-              <button onClick={() => deleteFork(fork.forkId)}>
-                Delete Fork
-              </button>
-              <button
-                disabled={!fundAddress}
-                onClick={() => fundAccount(fork.forkId)}
-              >
-                Send ETH
-              </button>
-              <SendDai forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
-              <SendStETH forkRPC={rpcUrl(fork.forkId)} address={fundAddress} />
-              <button
-                onClick={() =>
-                  setSnippet(getSnippet(fork.forkId, fork.forkChainId))
-                }
-              >
-                &lt;/&gt;
-              </button>
-            </div>
-          ))}
-        </div>
-        <textarea
-          style={{ height: "90px", width: "900px", margin: "20px" }}
-          value={snippet}
-        ></textarea>
-      </header>
-    </div>
+            ))}
+          </div>
+          <ConnectWallet />
+          <textarea
+            style={{ height: "90px", width: "900px", margin: "20px" }}
+            value={snippet}
+          ></textarea>
+        </header>
+      </div>
+    </Web3OnboardProvider>
   );
 }
 
